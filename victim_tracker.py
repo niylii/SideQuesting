@@ -11,15 +11,15 @@ load_dotenv()
 API_URL       = "https://api.intra.42.fr"
 CLIENT_ID     = os.getenv("CLIENT_ID")
 CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-SHEILA_LOGIN  = os.getenv("SHEILA_LOGIN")
+VICTIM_LOGIN  = os.getenv("VICTIM_LOGIN")
 WEBHOOK       = os.getenv("WEBHOOK")
-WEBHOOK_SHEILA = os.getenv("WEBHOOK_SHEILA")
+WEBHOOK_VICTIM = os.getenv("WEBHOOK_VICTIM")
 CAMPUS_ID     = int(os.getenv("CAMPUS_ID", "21"))
 POLL_INTERVAL = int(os.getenv("POLL_INTERVAL", "60"))
 
 _missing = [k for k, v in {
     "CLIENT_ID": CLIENT_ID, "CLIENT_SECRET": CLIENT_SECRET,
-    "SHEILA_LOGIN": SHEILA_LOGIN, "WEBHOOK": WEBHOOK, "WEBHOOK_SHEILA": WEBHOOK_SHEILA
+    "victim_LOGIN": VICTIM_LOGIN, "WEBHOOK": WEBHOOK, "WEBHOOK_VICTIM": WEBHOOK_VICTIM
 }.items() if not v]
 if _missing:
     print(f"[error] Missing .env variables: {', '.join(_missing)}")
@@ -40,9 +40,9 @@ def get_token() -> str:
     return resp.json()["access_token"]
 
 
-def check_sheila(headers: dict) -> tuple[bool, str]:
+def check_victim(headers: dict) -> tuple[bool, str]:
     resp = requests.get(
-        f"{API_URL}/v2/users/{SHEILA_LOGIN}/locations",
+        f"{API_URL}/v2/users/{VICTIM_LOGIN}/locations",
         params={
             "filter[active]": "true",
             "per_page":       1,
@@ -60,23 +60,23 @@ def check_sheila(headers: dict) -> tuple[bool, str]:
 
 
 def notify(msg: str) -> None:
-    DiscordWebhook(url=WEBHOOK_SHEILA, content=msg).execute()
+    DiscordWebhook(url=WEBHOOK_VICTIM, content=msg).execute()
 
 
 def main() -> None:
-    print(f"👀 Tracker started — watching sheishei every {POLL_INTERVAL}s")
+    print(f" Tracker started : watching victim every {POLL_INTERVAL}s")
 
     token   = get_token()
     headers = {"Authorization": f"Bearer {token}"}
 
-    here, host = check_sheila(headers)
+    here, host = check_victim(headers)
 
     if here:
-        notify(f"Sheila is heeere ! life is worth living lol ✨\n📍 Post: **{host}**")
+        notify(f"victim is here! at: **{host}**")
     else:
-        notify("😔 Sheila is not here yet …")
+        notify("victim is not here yet …")
 
-    sheila_online = here
+    victim_online = here
 
     while True:
         time.sleep(POLL_INTERVAL)
@@ -89,18 +89,18 @@ def main() -> None:
             continue
 
         try:
-            here, host = check_sheila(headers)
+            here, host = check_victim(headers)
         except Exception as e:
             print(f"[warn] API error: {e}")
             continue
 
-        if here and not sheila_online:
-            notify(f"Sheila is heeere !!! spark spark ✨\n📍 Post: **{host}**")
+        if here and not victim_online:
+            notify(f"victim is at **{host}**")
 
-        elif not here and sheila_online:
-            notify("👋 Sheila is gone!")
+        elif not here and victim_online:
+            notify("victim is gone!")
 
-        sheila_online = here
+        victim_online = here
 
 
 if __name__ == "__main__":
